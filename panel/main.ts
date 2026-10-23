@@ -50,8 +50,28 @@ let generation = 0;
 const fmt = (ts: number | null | undefined) =>
   ts && Number.isFinite(ts) ? new Date(ts).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "—";
 
-const fmtFull = (ts: number | null | undefined) =>
-  ts && Number.isFinite(ts) ? new Date(ts).toLocaleString("en-US", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : "—";
+const fmtFull = (ts: number | null | undefined) => {
+  if (!ts || !Number.isFinite(ts)) return "—";
+  const d = new Date(ts);
+  const dd = String(d.getDate()).padStart(2, "0");
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const hh = String(d.getHours()).padStart(2, "0");
+  const min = String(d.getMinutes()).padStart(2, "0");
+  return `${dd}/${mm} ${hh}:${min}`;
+};
+
+const countdown = (ts: number | null | undefined): string => {
+  if (!ts || !Number.isFinite(ts)) return "";
+  const diff = ts - Date.now();
+  if (diff <= 0) return "now";
+  const totalMin = Math.floor(diff / 60000);
+  const days = Math.floor(totalMin / (60 * 24));
+  const hours = Math.floor((totalMin % (60 * 24)) / 60);
+  const mins = totalMin % 60;
+  if (days > 0) return `${days}d ${hours}h`;
+  if (hours > 0) return `${hours}h ${mins}m`;
+  return `${mins}m`;
+};
 
 const pct = (v: number | null | undefined) =>
   v === null || v === undefined ? "—" : `${Math.round(v)}%`;
@@ -102,8 +122,13 @@ const quotaCard = (label: string, w: QuotaWindow | undefined) => {
     `<div class="q-row"><span class="q-label">${label}</span><span class="q-val ${isExceeded ? "q-val-exceeded" : ""}">${main}</span></div>`,
     bar,
   ];
-  if (w.resetAt)
-    rows.push(`<div class="q-row sub"><span>${isExceeded ? "resets" : "resets"}</span><span>${fmtFull(w.resetAt)}</span></div>`);
+  if (w.resetAt) {
+    const cd = countdown(w.resetAt);
+    const suffix = cd ? ` (${cd})` : "";
+    rows.push(
+      `<div class="q-row sub"><span>resets</span><span>${fmtFull(w.resetAt)}${suffix}</span></div>`
+    );
+  }
   if (w.valueLabel && used !== null && !isExceeded)
     rows.push(`<div class="q-row sub"><span></span><span>${w.valueLabel}</span></div>`);
   return `<div class="q-card ${isExceeded ? "q-card-exceeded" : ""}">${rows.join("")}</div>`;
