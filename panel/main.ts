@@ -92,21 +92,21 @@ const toggleCollapsed = (key: string) => {
 const quotaCard = (label: string, w: QuotaWindow | undefined) => {
   if (!w) return "";
   const used = w.usedPercent ?? null;
+  const isExceeded = w.valueLabel === "exceeded";
   const bar =
     used !== null
-      ? `<div class="bar"><div class="bar-fill" style="width:${used}%"></div></div>`
+      ? `<div class="bar"><div class="bar-fill ${isExceeded ? "bar-fill-exceeded" : ""}" style="width:${used}%"></div></div>`
       : "";
-  const main =
-    used !== null ? pct(used) : (w.valueLabel ?? "—");
+  const main = isExceeded ? "exceeded" : used !== null ? pct(used) : (w.valueLabel ?? "—");
   const rows = [
-    `<div class="q-row"><span class="q-label">${label}</span><span class="q-val">${main}</span></div>`,
+    `<div class="q-row"><span class="q-label">${label}</span><span class="q-val ${isExceeded ? "q-val-exceeded" : ""}">${main}</span></div>`,
     bar,
   ];
   if (w.resetAt)
-    rows.push(`<div class="q-row sub"><span>resets</span><span>${fmtFull(w.resetAt)}</span></div>`);
-  if (w.valueLabel && used !== null)
+    rows.push(`<div class="q-row sub"><span>${isExceeded ? "resets" : "resets"}</span><span>${fmtFull(w.resetAt)}</span></div>`);
+  if (w.valueLabel && used !== null && !isExceeded)
     rows.push(`<div class="q-row sub"><span></span><span>${w.valueLabel}</span></div>`);
-  return `<div class="q-card">${rows.join("")}</div>`;
+  return `<div class="q-card ${isExceeded ? "q-card-exceeded" : ""}">${rows.join("")}</div>`;
 };
 
 // =====================
@@ -372,6 +372,9 @@ css.textContent = `
   .q-val { font-variant-numeric: tabular-nums; font-weight:600; }
   .bar { height: 4px; background: var(--muted, #2a2a2a); border-radius:2px; margin:4px 0 2px; overflow:hidden; }
   .bar-fill { height:100%; background: var(--primary, #4a7); border-radius:2px; transition:width .3s; }
+  .bar-fill-exceeded { background: #d33; }
+  .q-val-exceeded { color: #f77; }
+  .q-card-exceeded { border-color: #d33; }
 
   .section { display:flex; flex-direction:column; gap:6px; }
   .section-title { font-size:11px; text-transform:uppercase; letter-spacing:.04em; color: var(--muted-foreground, #888); font-weight:600; }

@@ -242,18 +242,23 @@ const fetchQuota = async () => {
   }
 
   const windows = {};
-  if (dailyRemaining !== null && dailyResetAt) {
+  // Always emit daily/weekly — Devin may report resetAt without a remaining
+  // percent when the window is saturated (the percent field just goes absent).
+  // Panel must show "exceeded — resets at" rather than hide the card.
+  if (dailyRemaining !== null || dailyResetAt) {
     windows['1d'] = {
-      usedPercent: clampPercent(100 - dailyRemaining),
-      remainingPercent: clampPercent(dailyRemaining),
-      resetAt: dailyResetAt * 1000,
+      usedPercent: dailyRemaining !== null ? clampPercent(100 - dailyRemaining) : 100,
+      remainingPercent: dailyRemaining !== null ? clampPercent(dailyRemaining) : 0,
+      resetAt: dailyResetAt ? dailyResetAt * 1000 : null,
+      ...(dailyRemaining === null ? { valueLabel: 'exceeded' } : {}),
     };
   }
-  if (weeklyRemaining !== null && weeklyResetAt) {
+  if (weeklyRemaining !== null || weeklyResetAt) {
     windows['weekly'] = {
-      usedPercent: clampPercent(100 - weeklyRemaining),
-      remainingPercent: clampPercent(weeklyRemaining),
-      resetAt: weeklyResetAt * 1000,
+      usedPercent: weeklyRemaining !== null ? clampPercent(100 - weeklyRemaining) : 100,
+      remainingPercent: weeklyRemaining !== null ? clampPercent(weeklyRemaining) : 0,
+      resetAt: weeklyResetAt ? weeklyResetAt * 1000 : null,
+      ...(weeklyRemaining === null ? { valueLabel: 'exceeded' } : {}),
     };
   }
   if (planEndMs) {
