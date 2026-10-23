@@ -420,7 +420,12 @@ css.textContent = `
 `;
 document.head.appendChild(css);
 
+let paintedOnce = false;
 host.onReady((ctx) => {
   applyHostReady(ctx, document.documentElement);
+  // Host may re-fire `ready` on workspace/session churn; only paint on the
+  // first one. Subsequent reloads must come from the Refresh button.
+  if (paintedOnce) return;
+  paintedOnce = true;
   void paint();
 });
